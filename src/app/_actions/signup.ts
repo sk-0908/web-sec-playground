@@ -6,6 +6,7 @@ import { userProfileSchema } from "@/app/_types/UserProfile";
 import type { SignupRequest } from "@/app/_types/SignupRequest";
 import type { UserProfile } from "@/app/_types/UserProfile";
 import type { ServerActionResponse } from "@/app/_types/ServerActionResponse";
+import bcrypt from "bcrypt";
 
 // ユーザのサインアップのサーバアクション
 export const signupServerAction = async (
@@ -34,9 +35,7 @@ export const signupServerAction = async (
     }
 
     // パスワードのハッシュ化
-    // 💀 ハッシュ化せずにPW保存（ダメ絶対）
-    const hashedPassword = payload.password;
-    // const hashedPassword = await bcrypt.hash(payload.password, 10);
+    const hashedPassword = await bcrypt.hash(payload.password, 10);
 
     // ユーザの作成
     const user = await prisma.user.create({
@@ -61,7 +60,7 @@ export const signupServerAction = async (
     return {
       success: false,
       payload: null,
-      message: errorMsg,
+      message: "サインアップのサーバサイドの処理に失敗しました。",
       // 💀 エラーメッセージはユーザに見せない方が良い
       // システム内部構造や依存関係をユーザに漏らす可能性がある
       // message: "サインアップのサーバサイドの処理に失敗しました。",

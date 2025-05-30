@@ -7,6 +7,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { createSession } from "@/app/api/_helper/createSession";
 import { createJwt } from "@/app/api/_helper/createJwt";
 import { AUTH } from "@/config/auth";
+import bcrypt from "bcrypt";
 
 // キャッシュを無効化して毎回最新情報を取得
 export const dynamic = "force-dynamic";
@@ -41,8 +42,7 @@ export const POST = async (req: NextRequest) => {
     }
 
     // パスワードの検証
-    // ✍ bcrypt でハッシュ化したパスワードを検証ように書き換えよ。
-    const isValidPassword = user.password === loginRequest.password;
+    const isValidPassword = await bcrypt.compare(loginRequest.password, user.password);
     if (!isValidPassword) {
       const res: ApiResponse<null> = {
         success: false,
