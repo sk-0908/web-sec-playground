@@ -9,6 +9,9 @@ import { createJwt } from "@/app/api/_helper/createJwt";
 import { AUTH } from "@/config/auth";
 import bcrypt from "bcrypt";
 
+const MAX_FAILED_ATTEMPTS = 5;
+const LOCK_MINUTES = 30;
+
 // キャッシュを無効化して毎回最新情報を取得
 export const dynamic = "force-dynamic";
 export const fetchCache = "force-no-store";
@@ -29,6 +32,21 @@ export const POST = async (req: NextRequest) => {
 
     const user = await prisma.user.findUnique({
       where: { email: loginRequest.email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        password: true,
+        role: true,
+        aboutSlug: true,
+        aboutContent: true,
+        createdAt: true,
+        updatedAt: true,
+        lastLoginAt: true,
+        failedLoginAttempts: true,
+        isLocked: true,
+        lockUntil: true,
+      },
     });
     if (!user) {
       // 💀 このアカウント（メールアドレス）の有効無効が分かってしまう。
@@ -41,16 +59,56 @@ export const POST = async (req: NextRequest) => {
       return NextResponse.json(res);
     }
 
-    // パスワードの検証
-    const isValidPassword = await bcrypt.compare(loginRequest.password, user.password);
-    if (!isValidPassword) {
+    // アカウントロック判定
+    if (user.isLocked && user.lockUntil && user.lockUntil > new Date()) {
       const res: ApiResponse<null> = {
         success: false,
         payload: null,
-        message:
-          "メールアドレスまたはパスワードの組み合わせが正しくありません。",
+        message: `アカウントがロックされています。${user.lockUntil.toLocaleString()}までログインできません。`,
       };
       return NextResponse.json(res);
+    }
+
+    // パスワードの検証
+    const isValidPassword = await bcrypt.compare(loginRequest.password, user.password);
+    if (!isValidPassword) {
+      const failedLoginAttempts = user.failedLoginAttempts + 1;
+      let isLocked = false;
+      let lockUntil = null;
+      if (failedLoginAttempts >= MAX_FAILED_ATTEMPTS) {
+        isLocked = true;
+        lockUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
+      }
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts,
+          isLocked,
+          lockUntil,
+        },
+      });
+      const res: ApiResponse<null> = {
+        success: false,
+        payload: null,
+        message: isLocked
+          ? lockUntil
+            ? `アカウントがロックされました。${lockUntil.toLocaleString()}までログインできません。`
+            : "アカウントがロックされました。"
+          : "メールアドレスまたはパスワードの組み合わせが正しくありません。",
+      };
+      return NextResponse.json(res);
+    }
+
+    // 成功時はリセット
+    if (user.failedLoginAttempts > 0 || user.isLocked) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginAttempts: 0,
+          isLocked: false,
+          lockUntil: null,
+        },
+      });
     }
 
     const tokenMaxAgeSeconds = 60 * 60 * 3; // 3時間

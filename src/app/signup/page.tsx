@@ -14,6 +14,7 @@ import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { faSpinner, faPenNib } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import zxcvbn from "zxcvbn";
 
 import { signupServerAction } from "@/app/_actions/signup";
 
@@ -26,6 +27,10 @@ const Page: React.FC = () => {
 
   const [isPending, startTransition] = useTransition();
   const [isSignUpCompleted, setIsSignUpCompleted] = useState(false);
+
+  // パスワード強度用state
+  const [passwordStrength, setPasswordStrength] = useState<number | null>(null);
+  const [passwordFeedback, setPasswordFeedback] = useState<string>("");
 
   // フォーム処理関連の準備と設定
   const formMethods = useForm<SignupRequest>({
@@ -47,6 +52,24 @@ const Page: React.FC = () => {
     const subscription = formMethods.watch((value, { name }) => {
       if (name === c_Email || name === c_Password) {
         formMethods.clearErrors("root");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [formMethods]);
+
+  // パスワード強度判定
+  useEffect(() => {
+    const subscription = formMethods.watch((value, { name }) => {
+      if (name === c_Password) {
+        const pw = value[c_Password] || "";
+        if (pw.length > 0) {
+          const result = zxcvbn(pw);
+          setPasswordStrength(result.score);
+          setPasswordFeedback(result.feedback.suggestions.join(" "));
+        } else {
+          setPasswordStrength(null);
+          setPasswordFeedback("");
+        }
       }
     });
     return () => subscription.unsubscribe();
@@ -136,6 +159,26 @@ const Page: React.FC = () => {
             error={!!fieldErrors.password}
             autoComplete="off"
           />
+          {/* パスワード強度表示 */}
+          {passwordStrength !== null && (
+            <div className="mt-1 text-sm">
+              <span>強度: </span>
+              <span className={
+                passwordStrength <= 1
+                  ? "text-red-500"
+                  : passwordStrength === 2
+                  ? "text-yellow-500"
+                  : passwordStrength === 3
+                  ? "text-blue-500"
+                  : "text-green-600"
+              }>
+                {['とても弱い', '弱い', '普通', '強い', 'とても強い'][passwordStrength]}
+              </span>
+              {passwordFeedback && (
+                <div className="text-xs text-gray-500">{passwordFeedback}</div>
+              )}
+            </div>
+          )}
           <ErrorMsgField msg={fieldErrors.password?.message} />
           <ErrorMsgField msg={fieldErrors.root?.message} />
         </div>

@@ -1,3 +1,32 @@
+# Web Sec Playground
+
+## 概要
+このプロジェクトは、Next.js + Prisma + SQLite を用いたシンプルなユーザ認証アプリです。
+
+- ユーザ登録（サインアップ）・ログイン機能
+- パスワードはbcryptで安全にハッシュ化
+- 連続5回ログイン失敗でアカウントロック（30分）
+- サインアップ時にパスワード強度をリアルタイム表示
+
+## 主な機能
+- サインアップ時、パスワード強度をzxcvbnで判定しUI表示
+- ログイン失敗5回でアカウントロック（30分後に自動解除）
+- パスワードは常にハッシュ化して保存
+
+## 注意
+- 認証方式はJWTまたはセッションのどちらか一方のみ有効です（`src/config/auth.ts`で切替）
+
+---
+
+## 開発・カスタマイズ
+- Prismaスキーマは`prisma/schema.prisma`を編集し、`npx prisma db push`で反映
+- シードデータは`prisma/seed.ts`を編集
+- 認証ロジックは`src/app/api/login/route.ts`や`src/app/_actions/signup.ts`を参照
+
+---
+
+MIT License
+
 ## ⚠️ 重要な注意事項
 
 このプロジェクトは **ウェブアプリのセキュリティ実験用のコンテンツ** です。学習と検証を目的として、あえて脆弱性を含む設計となっています。
@@ -69,3 +98,5 @@ npm run start
 npx prisma studio
 ```
 
+## テストユーザ
+- メール: `user01@example.com` / パスワード: `password1111`
