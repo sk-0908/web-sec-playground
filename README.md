@@ -4,9 +4,12 @@
 このプロジェクトは、Next.js + Prisma + SQLite を用いたシンプルなユーザ認証アプリです。
 
 - ユーザ登録（サインアップ）・ログイン機能
+![1枚目](img/img01.png)
 - パスワードはbcryptで安全にハッシュ化
-- 連続5回ログイン失敗でアカウントロック（30分）
 - サインアップ時にパスワード強度をリアルタイム表示
+![2枚目](img/img02.png)
+- 連続5回ログイン失敗でアカウントロック（30分）
+![3枚目](img/img03.png)
 
 ## 主な機能
 - サインアップ時、パスワード強度をzxcvbnで判定しUI表示
@@ -42,14 +45,14 @@ MIT License
 ### 1. リポジトリのクローン
 
 ```
-git clone https://github.com/TakeshiWada1980/web-sec-playground-1.git
-cd web-sec-playground-1
+git clone https://github.com/sk-0908/web-sec-playground.git
+cd web-sec-playground
 ```
 
-上記でクローンすると、カレントフォルダのなかに `web-sec-playground-1` というフォルダが新規作成されて展開されます。別名にしたいときは、たとえば `hoge` というフォルダにクローンしたいときは、次のようにしてください。
+上記でクローンすると、カレントフォルダのなかに `web-sec-playground  ` というフォルダが新規作成されて展開されます。別名にしたいときは、たとえば `hoge` というフォルダにクローンしたいときは、次のようにしてください。
 
 ```
-git clone https://github.com/TakeshiWada1980/web-sec-playground-1.git hoge
+git clone https://github.com/sk-0908/web-sec-playground.git hoge
 cd hoge
 ```
 
